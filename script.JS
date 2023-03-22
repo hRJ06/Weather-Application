@@ -1,150 +1,145 @@
-const inputSlider = document.querySelector("[data-lengthSlider]")
-const lengthDisplay = document.querySelector("[data-length]")
-const passwordDisplay = document.querySelector("[data-passwordDisplay]")
-const copyBtn = document.querySelector("[data-copy]");
-const copyMsg = document.querySelector("[data-copyMsg]");
-const uppercaseCheck = document.querySelector("#uppercase");
-const lowercaseCheck = document.querySelector("#lowercase");
-const numbersCheck = document.querySelector("#numbers");
-const symbolsCheck = document.querySelector("#symbols");
-const indicator = document.querySelector("[data-indicator]");
-const generateBtn = document.querySelector(".generateButton");
-const allCheckBox = document.querySelectorAll("input[type=checkbox]");
-const symbols = '~`!@#$%^&*()_-+={[}]|:;"<,>.?/';
+const userTab = document.querySelector("[data-userWeather]")
+const searchTab = document.querySelector("[data-searchWeather]")
+const userContainer = document.querySelector(".weather-container");
+const grantAccessContainer = document.querySelector(".grant-location-container");
+const searchForm = document.querySelector("[data-searchForm]");
+const loadingScreen = document.querySelector(".loading-container");
+const userInfoContainer = document.querySelector(".user-info-container");
+const errorContainer = document.querySelector(".api-error-container");
+const errorText = document.querySelector("[data-apiErrorText]");
 
-let password = "";
-let passwordLength = 10;
-let checkCount = 1;
-handleSlider();
-// set strength circle color to grey
-setIndicator("#ccc");
+let currentTab = userTab;
+const API_KEY = "d1845658f92b31c64bd94f06f7188c9c";
+currentTab.classList.add("current-tab");
+getfromSessionStorage();
 
-// set password Length
-function handleSlider() {
-    inputSlider.value = passwordLength;
-    lengthDisplay.innerText = passwordLength;
-    const min = inputSlider.min;
-    const max = inputSlider.max;
-    inputSlider.style.backgroundSize = ((passwordLength - min)*100/(max - min)) + '%';
+function switchTab(clickedTab){
+    if(clickedTab != currentTab){
+        currentTab.classList.remove("current-tab");
+        currentTab = clickedTab;
+        currentTab.classList.add("current-tab");
+
+        if(!searchForm.classList.contains("active")){
+            userInfoContainer.classList.remove("active");
+            grantAccessContainer.classList.remove("active");
+            searchForm.classList.add("active");
+        }else{
+            searchForm.classList.remove("active");
+            userInfoContainer.classList.remove("active");
+            getfromSessionStorage();
+        }
+    }
 }
-function setIndicator(color) {
-    indicator.style.backgroundColor = color;
-    // shadow
-    indicator.style.boxShadow = `0px 0px 12px 1px ${color}`;
-}
-function getRandInteger(min,max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-function generateRandNumber(){
-    return getRandInteger(0,9);
-}
-function generateLowerCase(){
-    return String.fromCharCode(getRandInteger(97,123));
-}
-function generateUpperCase(){
-    return String.fromCharCode(getRandInteger(65,91));
-}
-function generateSymbol() {
-    const randNum = getRandInteger(0,symbols.length);
-    return symbols.charAt(randNum);
-}
-function calcStrength() {
-    let hasUpper = false;
-    let hasLower = false;
-    let hasNum = false;
-    let hasSys = false;
-    if(uppercaseCheck.checked) hasUpper = true;
-    if(lowercaseCheck.checked) hasLower = true;
-    if(numbersCheck.checked) hasNum = true;
-    if(symbolsCheck.checked) hasSys = true;
-    if(hasUpper && hasLower && (hasNum || hasSys) && passwordLength >= 8) {
-        setIndicator("#0f0");
-    }else if( (hasLower || hasUpper) && (hasNum || hasSys) && passwordLength >= 6){
-        setIndicator("#ff0");
+userTab.addEventListener("click",() => {
+    switchTab(userTab);
+});
+searchTab.addEventListener("click",() => {
+    switchTab(searchTab);
+});
+function getfromSessionStorage(){
+    // Check to see if present in Session Storage
+    const localCoordinates = sessionStorage.getItem("user-coordinates");
+    if(!localCoordinates){
+        // If not present
+        grantAccessContainer.classList.add("active");
     }else{
-        setIndicator("#f00");
+        // If present convert string to JSON.
+        const coordinates = JSON.parse(localCoordinates);
+        // for fetching lat and lon from coordinates
+        fetchUserWeatherInfo(coordinates);
     }
 }
-async function copyContent(){
+
+const grantAccessButton = document.querySelector("[data-grantAccess]");
+grantAccessButton.addEventListener("click",getLocation);
+
+function getLocation() {
+    if(navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+    }else{
+        alert("No Geolocation Support available");
+    } 
+}
+function showPosition(position) {
+    const userCoordinates = {
+        lat : position.coords.latitude,
+        lon : position.coords.longitude,
+    }
+    sessionStorage.setItem("user-coordinates", JSON.stringify(userCoordinates));
+    fetchUserWeatherInfo(userCoordinates);
+}
+
+async function fetchUserWeatherInfo(coordinates) {
+    const {lat,lon} = coordinates;
+    grantAccessContainer.classList.remove("active");
+    loadingScreen.classList.add("active");
+    errorContainer.classList.remove("active");
+    // API Call
     try{
-        await navigator.clipboard.writeText(passwordDisplay.value, passwordDisplay.value);
-        copyMsg.innerText = "Copied";
-    }catch(e){
-        copyMsg.innerText = "Failed";
-    }
-    // to make Copied Message span visible
-    copyMsg.classList.add("active");
-    setTimeout(() => {
-        copyMsg.classList.remove("active");
-    }, 2000);
-}
-inputSlider.addEventListener('input',(event) => {
-    passwordLength = event.target.value;
-    handleSlider();
-});
-copyBtn.addEventListener('click',() => {
-    if(passwordDisplay.value){
-        copyContent();
-    }
-}); 
-function handleCheckBox() {
-    checkCount = 0;
-    allCheckBox.forEach((checkBox) => {
-        if(checkBox.checked) checkCount++;
-    });
-    if(passwordLength < checkCount) {
-        passwordLength = checkCount;
-        handleSlider();
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
+        const data = await response.json();
+        if(!data.sys){
+            throw data;
+        }
+        loadingScreen.classList.remove("active");
+        userInfoContainer.classList.add("active");
+        renderWeatherInfo(data);
+    }catch(e) {
+        loadingScreen.classList.remove("active");
+        errorContainer.classList.add("active");
+        errorText.innerText = `Unable to fetch your Location`;
     }
 }
-allCheckBox.forEach( (checkBox) => {
-    checkBox.addEventListener('change',handleCheckBox);
-});
-function shufflePassword(array) {
-    // Fisher Yates Method
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math. floor(Math.random() * (i + 1));
-        const temp = array[i];
-        array[i] = array [j];
-        array [j] = temp;
-    }
-    let str = "";
-    array.forEach((el) =>(str += el));
-    return str;
+function renderWeatherInfo(weatherInfo) {
+    // fetch elements
+    const cityName = document.querySelector("[data-cityName]");
+    const countryIcon = document.querySelector("[data-countryIcon]");
+    const desc = document.querySelector("[data-weatherDesc]");
+    const weatherIcon = document.querySelector("[data-weatherIcon]");
+    const temp = document.querySelector("[data-temp]");
+    const windspeed = document.querySelector("[data-windspeed]");
+    const humidity = document.querySelector("[data-humidity]");
+    const cloudiness = document.querySelector("[data-cloudiness]");
+
+    // fetch info from weatherInfo that has been fetched from API Call and update in respective places
+    cityName.innerText = weatherInfo?.name;
+    countryIcon.src = `https://flagcdn.com/144x108/${weatherInfo?.sys?.country.toLowerCase()}.png`;
+    desc.innerText = weatherInfo?.weather?.[0]?.description;
+    weatherIcon.src = `http://openweathermap.org/img/w/${weatherInfo?.weather?.[0]?.icon}.png`;
+    temp.innerText = `${weatherInfo?.main?.temp} °C`;
+    windspeed.innerText = `${weatherInfo?.wind?.speed}m/s`;
+    humidity.innerText = `${weatherInfo?.main?.humidity}%`;
+    cloudiness.innerText = `${weatherInfo?.clouds?.all}%`;
 }
-generateBtn.addEventListener('click',() => {
-    if(checkCount <= 0) return;
-    if(passwordLength < checkCount){
-        passwordLength = checkCount;
-        handleSlider();
+
+// search form
+let searchInput = document.querySelector("[data-searchInput]");
+searchForm.addEventListener("submit",(event) => {
+    event.preventDefault();
+    if(searchInput.value === ""){
+        return;
+    }else{
+        fetchSearchWeatherInfo(searchInput.value);
     }
-    // remove old password
-    password = "";
-    let funcArr = [];
-    if (uppercaseCheck.checked) {
-        funcArr.push(generateUpperCase);
+})
+async function fetchSearchWeatherInfo(city){
+    errorContainer.classList.remove("active");
+    loadingScreen.classList.add("active");
+    userInfoContainer.classList.remove("active");
+    grantAccessContainer.classList.remove("active");
+    try{
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`);
+        const data = await response.json();
+        if(!data.sys){
+            throw data;
+        }
+        loadingScreen.classList.remove("active");
+        userInfoContainer.classList.add("active");
+        renderWeatherInfo(data);
     }
-    if (lowercaseCheck.checked) {
-        funcArr.push(generateLowerCase);
+    catch(e){
+        loadingScreen.classList.remove("active");
+        errorText.innerText = `City Not Found`; 
+        errorContainer.classList.add("active");
     }
-    if (numbersCheck.checked) {
-        funcArr.push(generateRandNumber);
-    }
-    if (symbolsCheck.checked) {
-        funcArr.push(generateSymbol);
-    }
-    // compulsory addition
-    for(let i = 0; i < funcArr.length; i++) {
-        password += funcArr[i]();
-    }
-    // remaining addition
-    for(let i = 0; i<passwordLength - funcArr.length; i++){
-        let randIndex = getRandInteger(0,funcArr.length);
-        password += funcArr[randIndex]();
-    }
-    // shuffle the array
-    password = shufflePassword(Array.from(password));
-    passwordDisplay.value = password;
-    // calculate strength
-    calcStrength();
-});
+}
