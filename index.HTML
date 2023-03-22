@@ -6,55 +6,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@100;200;300;400;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css">
-    <title>Password Generator | Hindol Roy</title>
+    <link rel="shortcut icon" href="./assets/favicon.ico" type="image/x-icon">
+    <title>Weather | Hindol Roy</title>
 </head>
 <body>
-    <div class="container">
-        <h1>Password Generator</h1>
-        <div class="display-container">
-            <input readonly placeholder="PASSWORD" class="display" data-passwordDisplay>
-            <button class = "copyBtn" data-copy>
-                <span class="tooltip" data-copyMsg></span>
-                <img src="./assets/copy.svg" alt="" width="23" height="23">
-            </button>
+    <div class="wrapper">
+        <h1>Weather App</h1>
+        <div class="tab-container">
+            <p class="tab" data-userWeather>Your Weather</p>
+            <p class="tab" data-searchWeather>Search Weather</p>
         </div>
-        <div class="input-container">
-            <!-- password length section -->
-            <div class="length-container">
-                <p>Password Length</p>
-                <p data-length>0</p>
+        <div class="weather-container">
+            <!-- grant location -->
+            <div class="sub-container grant-location-container">
+                <img src="./assets/location.png" alt="" width="80" height="80" loading="lazy">
+                <p>Grant Location Access</p>
+                <p>Allow Access to get Weather Information</p>
+                <button class="btn" data-grantAccess>Grant Access</button>
             </div>
-            <!-- slider -->
-            <input type="range" min="1" max="20" class="slider" step="1" data-lengthSlider>
-            <!-- checkboxes -->
-            <div class="check">
-                <input type="checkbox" id="uppercase" checked>
-                <label for="uppercase">Includes Uppercase letters</label>
+            <!-- search form -->
+            <form class="form-container" data-searchForm>
+                <input placeholder="Search for City..." data-searchInput>
+                <button class="btn" type="submit">
+                    <img src="./assets/search.png" alt="" width="20" height="20" loading="lazy">
+                </button>
+            </form>
+            <!-- loading screen container-->
+            <div class="sub-container loading-container">
+                <img src="./assets/loading.gif" alt="" width="150" height="150">
+                <p>Loading</p>
             </div>
-            <div class="check">
-                <input type="checkbox" id="lowercase">
-                <label for="lowercase">Includes Lowercase letters</label>
+            <!-- show weather information -->
+            <div class="sub-container user-info-container">
+
+                <!-- city name and flag -->
+                <div class="name">
+                    <p data-cityName></p>
+                    <img data-countryIcon>
+                </div>
+
+                <!-- weather description -->
+                <p data-weatherDesc></p>
+
+                <!-- weather icon -->
+                <img data-weatherIcon>
+
+                <!-- temperature -->
+                <p data-temp></p>
+
+                <!-- 3 cards - parameters -->
+
+                <!-- card 1 -->
+                <div class="parameter-container">
+                    <div class="parameter">
+                        <img src="./assets/wind.png" alt="">
+                        <p>Windspeed</p>
+                        <p data-windspeed></p>
+                    </div>
+    
+                    <!-- card 2 -->
+                    <div class="parameter">
+                        <img src="./assets/humidity.png" alt="">
+                        <p>Humidity</p>
+                        <p data-humidity></p>
+                    </div>
+    
+                    <!-- card 3 -->
+                    <div class="parameter">
+                        <img src="./assets/cloud.png" alt="">
+                        <p>Clouds</p>
+                        <p data-cloudiness></p>
+                    </div>
+                </div>
             </div>
-            <div class="check">
-                <input type="checkbox" id="numbers">
-                <label for="">Includes Numbers</label>
+            <!-- api fetch error -->
+            <div class="sub-container api-error-container">
+                <img src="./assets/not-found.png" alt="">
+                <p data-apiErrorText></p>
             </div>
-            <div class="check">
-                <input type="checkbox" id="symbols">
-                <label for="symbols">Includes Symbol</label>
-            </div>
-            <!-- strength section -->
-            <div class="strength-container">
-                <p>Strength</p>
-                <div class = "indicator" data-indicator></div>
-            </div>
-            <!-- generate Password -->
-            <button class="generateButton">Generate Password</button>
         </div>
     </div>
     <script src="script.JS"></script>
